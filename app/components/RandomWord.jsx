@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 const DIRECTIONS = {
   '↑': { dx: 0, dy: 1 },
@@ -10,50 +10,68 @@ const DIRECTIONS = {
 };
 
 const RandomWord = ({ countLimit, onFinish }) => {
-  // 初期値を '' ではなく、一瞬だけ表示されても違和感のない文字、
-  // あるいは「Go!」の残像を維持するために空文字にします。
-  const [currentWord, setCurrentWord] = useState(''); 
-  const [count, setCount] = useState(0);
-  const [pos, setPos] = useState({ x: 0, y: 1 });
+  // 1. 初期値を "Go!" に固定し、最初から描画対象を作る（チラつき防止）
+  const [currentWord, setCurrentWord] = useState('Go!'); 
+  const [step, setStep] = useState(0);
+
+  // 2. 4reaction版を参考に useRef で位置を管理（再レンダリングに依存しない正確な計算）
+  const pos = useRef({ x: 0, y: 1 });
+  const lastDirKey = useRef("");
+
+  // 3. 次の方向を計算するロジックを useCallback でメモ化
+  const getNextDirection = useCallback(() => {
+    const keys = Object.keys(DIRECTIONS);
+    const validOptions = keys.filter(key => {
+      const move = DIRECTIONS[key];
+      const nextX = pos.current.x + move.dx;
+      const nextY = pos.current.y + move.dy;
+
+      // 境界判定（アサイメントの範囲内か）
+      const isWithinBounds = nextX >= -3 && nextX <= 3 && nextY >= 0 && nextY <= 3;
+      // 1回目にstayを出さない（リアクションの遅れを排除）
+      const isNotFirstStay = !(step === 0 && key === 'stay');
+      // 連続で同じ方向に行かない（切り返しを強制）
+      const isNotConsecutive = key !== lastDirKey.current;
+
+      return isWithinBounds && isNotFirstStay && isNotConsecutive;
+    });
+
+    return validOptions.length > 0 
+      ? validOptions[Math.floor(Math.random() * validOptions.length)]
+      : 'stay';
+  }, [step]);
 
   useEffect(() => {
-    if (count >= countLimit) {
-      onFinish();
-      return;
+    // 【ドリル終了フェーズ】4reaction版の「1.2秒の余韻」を再現
+    if (step >= countLimit) {
+      setCurrentWord('Over!'); 
+      const finalTimer = setTimeout(onFinish, 1200); // 1.2秒待ってからFinish画面へ
+      return () => clearTimeout(finalTimer);
     }
 
-    // ここが肝：初回（count 0）の処理を極限まで速くする
-    const delay = count === 0 ? 0 : 1000;
+    // 【ドリル進行フェーズ】
+    // 初回（Go!）は0.5秒、それ以降は1.0s〜1.4sのランダムな遅延
+    const delay = step === 0 
+      ? 500 
+      : Math.floor(Math.random() * (1400 - 1000 + 1)) + 1000;
 
     const timer = setTimeout(() => {
-      const keys = Object.keys(DIRECTIONS);
-      const validDirections = keys.filter(key => {
-        const move = DIRECTIONS[key];
-        const nextX = pos.x + move.dx;
-        const nextY = pos.y + move.dy;
-        const isWithinBounds = nextX >= -3 && nextX <= 3 && nextY >= 0 && nextY <= 3;
-        const isNotFirstStay = !(count === 0 && key === 'stay');
-        const isNotConsecutive = key !== currentWord;
-        return isWithinBounds && isNotFirstStay && isNotConsecutive;
-      });
-
-      const nextDir = validDirections.length > 0 
-        ? validDirections[Math.floor(Math.random() * validDirections.length)]
-        : 'stay';
+      const nextDir = getNextDirection();
 
       setCurrentWord(nextDir);
-      setPos(prev => ({
-        x: prev.x + DIRECTIONS[nextDir].dx,
-        y: prev.y + DIRECTIONS[nextDir].dy
-      }));
-      setCount(prev => prev + 1);
+      // useRef の値を更新
+      pos.current = {
+        x: pos.current.x + DIRECTIONS[nextDir].dx,
+        y: pos.current.y + DIRECTIONS[nextDir].dy
+      };
+      lastDirKey.current = nextDir;
+      
+      setStep(prev => prev + 1);
     }, delay);
 
     return () => clearTimeout(timer);
-  }, [count, countLimit, onFinish, pos, currentWord]);
+  }, [step, countLimit, onFinish, getNextDirection]);
 
-  // 【重要】 return null; をやめる
-  // 何も出さない瞬間を作らず、常にコンテナを維持する
   return (
     <div className="fullscreen-text">
       {currentWord}

@@ -12,7 +12,7 @@ const Page = () => {
   // 将来的に「回数」や「範囲」をここから調整できるようにしておくと、
   // フリーランスとしての「保守性の高いコード」になります。
   const CONFIG = {
-    totalCounts: 10,
+    totalCounts: 7,//表示回数
     interval: 1000 // 1秒間隔
   };
 

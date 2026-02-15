@@ -15,7 +15,7 @@ const Countdown = ({ onFinish }) => {
       // "Go!" と表示されている状態で1秒待機してから交代
       const timer = setTimeout(() => {
         onFinish(); // ここで親の stage を切り替える
-      }, 1000);
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [count, onFinish]);

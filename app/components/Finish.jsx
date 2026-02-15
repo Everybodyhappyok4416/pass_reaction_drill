@@ -7,7 +7,7 @@ const Finish = ({ onRestart }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onRestart();
-    }, 2000); // 2秒表示したら戻る
+    }, 1000); // 1秒表示したら戻る
 
     return () => clearTimeout(timer);
   }, [onRestart]);
