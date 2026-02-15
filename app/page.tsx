@@ -24,7 +24,7 @@ const Page = () => {
             className="start-button"
             onClick={() => setStage("countdown")}
           >
-            Start
+            Pass reaction
           </button>
         </div>
       )}
