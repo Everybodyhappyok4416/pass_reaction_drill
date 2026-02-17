@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 const DIRECTIONS = {
   '↑': { dx: 0, dy: 1 },
-  '↓': { dx: 0, dy: -1 },
+  'Go': { dx: 0, dy: -1 },
   '↗︎': { dx: 1, dy: 1 },
   '↖︎': { dx: -1, dy: 1 },
   'stay': { dx: 0, dy: 0 }
