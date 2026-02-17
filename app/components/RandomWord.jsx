@@ -53,7 +53,7 @@ const RandomWord = ({ countLimit, onFinish }) => {
     // 初回（Go!）は0.5秒、それ以降は1.0s〜1.4sのランダムな遅延
     const delay = step === 0 
       ? 500 
-      : Math.floor(Math.random() * (1400 - 1000 + 1)) + 1000;
+      : Math.floor(Math.random() * (1500 - 1100 + 1)) + 1100;
 
     const timer = setTimeout(() => {
       const nextDir = getNextDirection();
